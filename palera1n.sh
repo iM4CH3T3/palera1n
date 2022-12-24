@@ -15,7 +15,7 @@ echo "[*] Command ran:`if [ $EUID = 0 ]; then echo " sudo"; fi` ./palera1n.sh $@
 # =========
 # Variables
 # =========
-ipsw="" # IF YOU WERE TOLD TO PUT A CUSTOM IPSW URL, PUT IT HERE. YOU CAN FIND THEM ON https://appledb.dev
+ipsw="https://updates.cdn-apple.com/2022SummerFCS/fullrestores/012-40468/6AD38679-189F-400F-A10D-0FF83492CBB7/iPhone10,3,iPhone10,6_15.6_19G69_Restore.ipsw" # IF YOU WERE TOLD TO PUT A CUSTOM IPSW URL, PUT IT HERE. YOU CAN FIND THEM ON https://appledb.dev
 version="1.4.1"
 os=$(uname)
 dir="$(pwd)/binaries/$os"
@@ -373,7 +373,9 @@ chmod +x "$dir"/*
 
 echo "palera1n | Version $version-$branch-$commit"
 echo "Written by Nebula and Mineek | Some code and ramdisk from Nathan"
-echo ""
+echo "!!! This is a special stripped-down version of palera1n !!!"
+echo "!!! It is meant to be used for development purposes only !!!"
+echo "!!! Do not use this version if you don't know what you're doing !!!"
 
 version=""
 parse_cmdline "$@"
@@ -393,32 +395,6 @@ if [ -z "$tweaks" ] && [ "$semi_tethered" = "1" ]; then
     echo "    Rootless is already semi-tethered"
     >&2 echo "Hint: to use tweaks on semi-tethered, specify the --tweaks option"
     exit 1;
-fi
-
-if [ "$tweaks" = 1 ] && [ ! -e ".tweaksinstalled" ] && [ ! -e ".disclaimeragree" ] && [ -z "$semi_tethered" ] && [ -z "$restorerootfs" ]; then
-    echo "!!! WARNING WARNING WARNING !!!"
-    echo "This flag will add tweak support BUT WILL BE TETHERED."
-    echo "THIS ALSO MEANS THAT YOU'LL NEED A PC EVERY TIME TO BOOT."
-    echo "THIS WORKS ON 15.0-16.2"
-    echo "DO NOT GET ANGRY AT US IF YOUR DEVICE IS BORKED, IT'S YOUR OWN FAULT AND WE WARNED YOU"
-    echo "DO YOU UNDERSTAND? TYPE 'Yes, do as I say' TO CONTINUE"
-    read -r answer
-    if [ "$answer" = 'Yes, do as I say' ]; then
-        echo "Are you REALLY sure? WE WARNED YOU!"
-        echo "Type 'Yes, I am sure' to continue"
-        read -r answer
-        if [ "$answer" = 'Yes, I am sure' ]; then
-            echo "[*] Enabling tweaks"
-            tweaks=1
-            touch .disclaimeragree
-        else
-            echo "[-] Please type it exactly if you'd like to proceed. Otherwise, remove --tweaks, or add --semi-tethered"
-            exit
-        fi
-    else
-        echo "[-] Please type it exactly if you'd like to proceed. Otherwise, remove --tweaks, or add --semi-tethered"
-        exit
-    fi
 fi
 
 # Get device's iOS version from ideviceinfo if in normal mode
@@ -619,9 +595,6 @@ if [ ! -f blobs/"$deviceid"-"$version".der ]; then
     echo "[*] Dumping apticket"
     sleep 1
     remote_cp root@localhost:/mnt6/$active/System/Library/Caches/apticket.der blobs/"$deviceid"-"$version".der
-    #remote_cmd "cat /dev/rdisk1" | dd of=dump.raw bs=256 count=$((0x4000)) 
-    #"$dir"/img4tool --convert -s blobs/"$deviceid"-"$version".shsh2 dump.raw
-    #rm dump.raw
 
     if [ "$semi_tethered" = "1" ]; then
         if [ -z "$skip_fakefs" ]; then
@@ -637,8 +610,6 @@ if [ ! -f blobs/"$deviceid"-"$version".der ]; then
         fi
     fi
 
-    #remote_cmd "/usr/sbin/nvram allow-root-hash-mismatch=1"
-    #remote_cmd "/usr/sbin/nvram root-live-fs=1"
     if [ "$tweaks" = "1" ]; then
         if [ "$semi_tethered" = "1" ]; then
             remote_cmd "/usr/sbin/nvram auto-boot=true"
@@ -662,11 +633,7 @@ if [ ! -f blobs/"$deviceid"-"$version".der ]; then
 
     remote_cmd "rm -f /mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kcache.raw /mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kcache.patched /mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kcache.im4p /mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kernelcachd"
     if [ "$tweaks" = "1" ]; then
-        if [ "$semi_tethered" = "1" ]; then
-            remote_cmd "cp /mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kernelcache /mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kernelcache.bak"
-        else
-            remote_cmd "mv /mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kernelcache /mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kernelcache.bak || true"
-        fi
+        remote_cmd "cp /mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kernelcache /mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kernelcache.bak"
     fi
     sleep 1
 
@@ -690,9 +657,9 @@ if [ ! -f blobs/"$deviceid"-"$version".der ]; then
     remote_cp root@localhost:/mnt6/$active/System/Library/Caches/com.apple.kernelcaches/kcache.patched work/
     if [ "$tweaks" = "1" ]; then
         if [[ "$version" == *"16"* ]]; then
-            "$dir"/Kernel64Patcher work/kcache.patched work/kcache.patched2 -e -o -u -l -t -h -d
+            "$dir"/Kernel64Patcher work/kcache.patched work/kcache.patched2 -e -o -u -t -h -d
         else
-            "$dir"/Kernel64Patcher work/kcache.patched work/kcache.patched2 -e -l
+            "$dir"/Kernel64Patcher work/kcache.patched work/kcache.patched2 -e
         fi
     else
         "$dir"/Kernel64Patcher work/kcache.patched work/kcache.patched2 -a
@@ -731,79 +698,6 @@ if [ ! -f blobs/"$deviceid"-"$version".der ]; then
             remote_cmd "rm -rf /mnt$di/System/Library/Caches/com.apple.dyld"
             remote_cmd "ln -s /System/Cryptexes/OS/System/Library/Caches/com.apple.dyld /mnt$di/System/Library/Caches/"
         fi
-
-        # iOS 16 stuff
-        # if [[ "$version" == *"16"* ]]; then
-        #     if [ -z "$semi_tethered" ]; then
-        #         echo "[*] Performing iOS 16 fixes"
-        #         sleep 1
-        #         os_disk=$(remote_cmd "/usr/sbin/hdik /mnt6/cryptex1/current/os.dmg | head -3 | tail -1 | sed 's/ .*//'")
-        #         sleep 1
-        #         app_disk=$(remote_cmd "/usr/sbin/hdik /mnt6/cryptex1/current/app.dmg | head -3 | tail -1 | sed 's/ .*//'")
-        #         sleep 1
-        #         remote_cmd "/sbin/mount_apfs -o ro $os_disk /mnt2"
-        #         sleep 1
-        #         remote_cmd "/sbin/mount_apfs -o ro $app_disk /mnt9"
-        #         sleep 1
-
-        #         remote_cmd "rm -rf /mnt1/System/Cryptexes/App /mnt1/System/Cryptexes/OS"
-        #         sleep 1
-        #         remote_cmd "mkdir /mnt1/System/Cryptexes/App /mnt1/System/Cryptexes/OS"
-        #         sleep 1
-        #         remote_cmd "cp -a /mnt9/. /mnt1/System/Cryptexes/App"
-        #         sleep 1
-        #         remote_cmd "cp -a /mnt2/. /mnt1/System/Cryptexes/OS"
-        #         sleep 1
-        #         remote_cmd "rm -rf /mnt1/System/Cryptexes/OS/System/Library/Caches/com.apple.dyld"
-        #         sleep 1
-        #         remote_cmd "cp -a /mnt2/System/Library/Caches/com.apple.dyld /mnt1/System/Library/Caches/"
-        #     fi
-        # fi
-
-        echo "[*] Copying files to rootfs"
-        remote_cmd "rm -rf /mnt$di/jbin /mnt$di/.installed_palera1n"
-        sleep 1
-        remote_cmd "mkdir -p /mnt$di/jbin/binpack /mnt$di/jbin/loader.app"
-        sleep 1
-
-        # download loader
-        cd other/rootfs/jbin
-        rm -rf loader.app
-        curl -LO https://static.palera.in/deps/loader.zip
-        unzip loader.zip -d .
-        unzip palera1n.ipa -d .
-        mv Payload/palera1nLoader.app loader.app
-        rm -rf palera1n.zip loader.zip palera1n.ipa Payload
-        
-        # download jbinit files
-        rm -f jb.dylib jbinit jbloader launchd
-        curl -L https://static.palera.in/deps/rootfs.zip -o rfs.zip
-        unzip rfs.zip -d .
-        unzip rootfs.zip -d .
-        rm rfs.zip rootfs.zip
-        cd ../../..
-
-        # download binpack
-        mkdir -p other/rootfs/jbin/binpack
-        curl -L https://static.palera.in/binpack.tar -o other/rootfs/jbin/binpack/binpack.tar
-
-        sleep 1
-        remote_cp -r other/rootfs/* root@localhost:/mnt$di
-        {
-            echo "{"
-            echo "    \"version\": \"${version} (${commit}_${branch})\","
-            echo "    \"args\": \"$@\","
-            echo "    \"pc\": \"$(uname) $(uname -r)\""
-            echo "}"
-        } > work/.installed_palera1n
-        sleep 1
-        remote_cp work/.installed_palera1n root@localhost:/mnt$di
-
-        remote_cmd "ldid -s /mnt$di/jbin/launchd /mnt$di/jbin/jbloader /mnt$di/jbin/jb.dylib"
-        remote_cmd "chmod +rwx /mnt$di/jbin/launchd /mnt$di/jbin/jbloader /mnt$di/jbin/post.sh"
-        remote_cmd "tar -xvf /mnt$di/jbin/binpack/binpack.tar -C /mnt$di/jbin/binpack/"
-        sleep 1
-        remote_cmd "rm /mnt$di/jbin/binpack/binpack.tar"
     fi
 
     rm -rf work BuildManifest.plist
@@ -957,42 +851,7 @@ fi
 sleep 2
 _pwn
 _reset
-echo "[*] Booting device"
-if [[ "$deviceid" == iPhone9,[1-4] ]] || [[ "$deviceid" == "iPhone10,"* ]]; then
-    sleep 1
-    "$dir"/irecovery -f boot-"$deviceid"/ibot.img4
-    sleep 3
-    "$dir"/irecovery -c "dorwx"
-    sleep 2
-    if [[ "$deviceid" == iPhone9,[1-4] ]]; then
-        "$dir"/irecovery -f other/payload/payload_t8010.bin
-    else
-        "$dir"/irecovery -f other/payload/payload_t8015.bin
-    fi
-    sleep 3
-    "$dir"/irecovery -c "go"
-    sleep 1
-    "$dir"/irecovery -c "go xargs $boot_args"
-    sleep 1
-    "$dir"/irecovery -c "go xfb"
-    sleep 1
-    "$dir"/irecovery -c "go boot $fs"
-else
-    if [[ "$cpid" == *"0x801"* ]]; then
-        sleep 1
-        "$dir"/irecovery -f boot-"$deviceid"/ibot.img4
-    else
-        sleep 1
-        "$dir"/irecovery -f boot-"$deviceid"/iBSS.img4
-        sleep 4
-        "$dir"/irecovery -f boot-"$deviceid"/ibot.img4
-    fi
-
-    if [ -z "$semi_tethered" ]; then
-       sleep 2
-       "$dir"/irecovery -c fsboot
-    fi
-fi
+echo "[*] Not automatically booting device in this version. Please boot the device manually."
 
 if [ -d "logs" ]; then
     cd logs
@@ -1001,13 +860,6 @@ if [ -d "logs" ]; then
 fi
 
 rm -rf work rdwork
-echo ""
-echo "Done!"
-echo "The device should now boot to iOS"
-echo "When you unlock the device, it will respring about 30 seconds after"
-echo "If this is your first time jailbreaking, open the new palera1n app, then press Install"
-echo "Otherwise, press Do All in the settings section of the app"
-echo "If you have any issues, please join the Discord server and ask for help: https://dsc.gg/palera1n"
-echo "Enjoy!"
+echo "[*] Done!"
 
 } 2>&1 | tee logs/${log}
