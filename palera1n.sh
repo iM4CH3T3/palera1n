@@ -23,7 +23,7 @@ commit=$(git rev-parse --short HEAD)
 branch=$(git rev-parse --abbrev-ref HEAD)
 max_args=1
 arg_count=0
-disk=8
+disk=1
 fs=disk1s1
 
 # =========
@@ -559,7 +559,6 @@ fi
 # ============
 
 # Actually create the boot files
-disk=$(cat .fs-"$deviceid")
 fs=disk1s1
 
 boot_args=""
