@@ -5,6 +5,8 @@ Download the bootstrap.tar from https://cameronkatri.com/bootstrap-ssh.tar.zst a
 Extract it to /private/preboot/ACTIVE
 symlink it to /var/jb ( ln -s /private/preboot/ACTIVE/var/jb /var/jb )
 symlink /var/jb to /var/jb/var/jb ( ln -s /var/jb /var/jb/var/jb )
+Execute /var/jb/prep_bootstrap.sh, then run /var/jb/usr/bin/login and login as mobile.
+Once logged in as mobile, run sudo passwd and set a root password, then login as root.
 
 To install ElleKit rootless:
 
