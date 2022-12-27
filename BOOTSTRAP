@@ -1,0 +1,19 @@
+Connect to ssh running on port 44.
+
+Download the bootstrap.tar from https://cameronkatri.com/bootstrap-ssh.tar.zst and unzst it, then upload it to your device.
+
+Extract it to /private/preboot/ACTIVE
+symlink it to /var/jb ( ln -s /private/preboot/ACTIVE/var/jb /var/jb )
+symlink /var/jb to /var/jb/var/jb ( ln -s /var/jb /var/jb/var/jb )
+
+To install ElleKit rootless:
+
+curl -sLO https://cdn.discordapp.com/attachments/1028398976640229380/1055561517359181894/ellekit_rootless.deb
+dpkg --force-all -i ellekit_rootless.deb
+rm -rf /var/jb/usr/lib/ellekit/pspawn.dylib
+curl -sL https://cdn.discordapp.com/attachments/1028398976640229380/1055565626002911253/pspawn.dylib --output /var/jb/usr/lib/ellekit/pspawn.dylib
+ln -s /private/preboot/$(cat /private/preboot/active)/var/jb/usr/lib/libsubstitute.dylib /private/preboot/$(cat /private/preboot/active)/var/jb/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate
+
+Now you can install any tweak using dpkg, if you want Sileo you'll need to install the rootless deb from Pogo or something. Be sure to REBOOT or USERSPACE REBOOT after installing any tweaks, because ellekit needs that.
+
+Enjoy!
