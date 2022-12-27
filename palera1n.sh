@@ -631,19 +631,11 @@ if [ ! -f boot-"$deviceid"/ibot.img4 ]; then
 
         echo "[*] Patching and signing iBSS/iBoot"
         "$dir"/iBoot64Patcher iBSS.dec iBSS.patched
-        if [ "$semi_tethered" = "1" ]; then
             if [ "$serial" = "1" ]; then
-                "$dir"/iBoot64Patcher ibot.dec ibot.patched -b "serial=3 rd=$fs" -l
+                "$dir"/iBoot64Patcher ibot.dec ibot.patched -b "serial=3 rootdev=md0" -f
             else
-                "$dir"/iBoot64Patcher ibot.dec ibot.patched -b "-v rd=$fs" -l
+                "$dir"/iBoot64Patcher ibot.dec ibot.patched -b "-v rootdev=md0" -f
             fi
-        else
-            if [ "$serial" = "1" ]; then
-                "$dir"/iBoot64Patcher ibot.dec ibot.patched -b "serial=3" -f
-            else
-                "$dir"/iBoot64Patcher ibot.dec ibot.patched -b "-v" -f
-            fi
-        fi
 
         if [ "$os" = 'Linux' ]; then
             sed -i 's/\/\kernelcache/\/\kernelcachd/g' ibot.patched
